@@ -1,8 +1,9 @@
 #! /usr/bin/env nu
 
 def main [path = "input.txt"] {
-  let col1 = getInput $path | get first | sort
-  let col2 = getInput $path | get second | sort | group-by
+  let input = getInput $path
+  let col1 = $input | get first | sort
+  let col2 = $input | get second | sort | group-by
   let countOf = { |v| $col2 | get --ignore-errors $"($v)" | default [] | length }
 
   $col1

@@ -1,8 +1,9 @@
 #! /usr/bin/env nu
 
 def main [path = "input.txt"] {
-  let col1 = getInput $path | select first | sort
-  let col2 = getInput $path | select second | sort
+  let input = getInput $path
+  let col1 = $input | select first | sort
+  let col2 = $input | select second | sort
 
   ($col1 | merge $col2)
   | each {|f| $f.first - $f.second }
