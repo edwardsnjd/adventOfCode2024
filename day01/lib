@@ -1,0 +1,28 @@
+#! /usr/bin/env bash
+
+function part1() {
+   local inputPath="${1:-input.txt}"
+
+   paste \
+      <(cut -d' ' -f1 "$inputPath" | sort) \
+      <(cut -d' ' -f4 "$inputPath" | sort) \
+   | awk '
+      {
+        v = $1-$2
+        if (v<0) { print -1 * v } else { print v }
+      }
+   ' | sumList
+}
+
+function part2() {
+   local inputPath="${1:-input.txt}"
+
+   join \
+      <(cut -d' ' -f1 "$inputPath" | sort) \
+      <(cut -d' ' -f4 "$inputPath" | sort | uniq -c | awk '{ print $2, $1}') \
+   | awk '{ print $1 * $2 }' | sumList
+}
+
+function sumList() {
+   awk '{ total += $1 } END { print total }'
+}
