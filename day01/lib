@@ -7,11 +7,10 @@ function part1() {
       <(cut -d' ' -f1 "$inputPath" | sort) \
       <(cut -d' ' -f4 "$inputPath" | sort) \
    | awk '
-      {
-        v = $1-$2
-        if (v<0) { print -1 * v } else { print v }
-      }
-   ' | sumList
+      function abs(x) { return x < 0 ? x * -1 : x }
+      { print abs($1 - $2) }
+   ' \
+   | sumList
 }
 
 function part2() {
@@ -20,7 +19,8 @@ function part2() {
    join \
       <(cut -d' ' -f1 "$inputPath" | sort) \
       <(cut -d' ' -f4 "$inputPath" | sort | uniq -c | awk '{ print $2, $1}') \
-   | awk '{ print $1 * $2 }' | sumList
+   | awk '{ print $1 * $2 }' \
+   | sumList
 }
 
 function sumList() {
