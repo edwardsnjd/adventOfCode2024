@@ -1,7 +1,7 @@
-#! /usr/bin/env nu
+#! /usr/bin/env -S nu --stdin
 
-def main [path = "input.txt"] {
-  let input = getInput $path
+def main [] {
+  let input = $in | parseInput
   let col1 = $input | select first | sort
   let col2 = $input | select second | sort
 
@@ -11,9 +11,8 @@ def main [path = "input.txt"] {
   | math sum
 }
 
-def getInput [path] {
-  open $path
-  | lines
+def parseInput [] {
+  lines
   | split column --regex " +" first second
   | update first { $in | into int }
   | update second { $in | into int }

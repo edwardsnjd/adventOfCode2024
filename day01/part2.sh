@@ -1,11 +1,10 @@
-#!/usr/bin/env bash
+#! /usr/bin/env bash
 
-inputPath="${1:-input.txt}"
-
+input="$(cat "$@")"
 join \
-   <(cut -d' ' -f1 "$inputPath" | sort) \
-   <(cut -d' ' -f4 "$inputPath" | sort | uniq -c | awk '{ print $2, $1}') \
+  <(echo "$input" | cut -d' ' -f1 | sort) \
+  <(echo "$input" | cut -d' ' -f4 | sort | uniq -c | awk '{ print $2, $1}') \
 | awk '
-    { total += $1 * $2 }
-    END { print total }
+  { total += $1 * $2 }
+  END { print total }
 '
