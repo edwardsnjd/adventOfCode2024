@@ -3,9 +3,8 @@
 def main [path = "input.txt"] {
   let col1 = getInput $path | select first | sort
   let col2 = getInput $path | select second | sort
-  let merged = $col1 | merge $col2
 
-  $merged
+  ($col1 | merge $col2)
   | each {|f| $f.first - $f.second }
   | math abs
   | math sum
