@@ -6,14 +6,14 @@ Bash implementation
 
 Run the tests:
 ```bash
-./part1 example.txt
-./part2 example.txt
+./part1.sh example.txt
+./part2.sh example.txt
 ```
 
 Get the answers:
 ```bash
-./part1 input.txt
-./part2 input.txt
+./part1.sh input.txt
+./part2.sh input.txt
 ```
 
 Nushell implementation
