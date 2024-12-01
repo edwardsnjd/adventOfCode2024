@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
-source lib
-part2 "$@"
+
+inputPath="${1:-input.txt}"
+
+join \
+   <(cut -d' ' -f1 "$inputPath" | sort) \
+   <(cut -d' ' -f4 "$inputPath" | sort | uniq -c | awk '{ print $2, $1}') \
+| awk '{ print $1 * $2 }' \
+| awk '{ total += $1 } END { print total }'
