@@ -20,23 +20,23 @@ fun parseCommands(line: String): List<Command> {
   }
 }
 
+class State {
+  var accept: Boolean = true
+  var mults: MutableList<Mul> = mutableListOf()
+
+  operator fun invoke(cmd: Command) = apply {
+    when (cmd) {
+      Do -> accept = true
+      Dont -> accept = false
+      is Mul -> if (accept) mults.add(cmd)
+    }
+  }
+}
+
 generateSequence(::readlnOrNull)
   .map(::parseCommands)
   .flatten()
-  .fold(
-    object {
-      var accept: Boolean = true
-      var mults: MutableList<Mul> = mutableListOf()
-    }
-  ) { acc, cmd ->
-    when (cmd) {
-      Do -> acc.accept = true
-      Dont -> acc.accept = false
-      is Mul -> if (acc.accept) acc.mults.add(cmd)
-      else -> error("Unknown command")
-    }
-    acc
-  }
+  .fold(State()) { acc, cmd -> acc(cmd) }
   .let { it.mults }
   .map { it.a * it.b }
   .sum()
