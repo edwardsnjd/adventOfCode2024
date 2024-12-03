@@ -7,9 +7,8 @@ object Do: Command
 object Dont: Command
 data class Mul(val a: Int, val b: Int): Command
 
-fun parseCommands(line: String): List<Command> {
-  val matches = mulRe.findAll(line).toList()
-  return matches.map {
+fun parseCommands(line: String): List<Command> =
+  mulRe.findAll(line).toList().map {
     val (yep,nope,mult,a,b) = it.destructured
     when {
       yep.isNotEmpty() -> Do
@@ -18,7 +17,6 @@ fun parseCommands(line: String): List<Command> {
       else -> error("Unknown match")
     }
   }
-}
 
 class State {
   var accept: Boolean = true
