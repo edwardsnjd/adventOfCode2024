@@ -1,17 +1,14 @@
 #! /usr/bin/env -S kotlin -J-ea
 
 data class Coord(val x: Int, val y: Int) {
-  operator fun plus(other: Coord): Coord =
-    Coord(x + other.x, y + other.y)
-
-  operator fun minus(other: Coord): Coord =
-    Coord(x - other.x, y - other.y)
+  operator fun plus(other: Coord): Coord = Coord(x + other.x, y + other.y)
+  operator fun minus(other: Coord): Coord = Coord(x - other.x, y - other.y)
 }
 
-class Data(
+data class Data(
+  val antenna: MutableMap<Char, MutableSet<Coord>> = mutableMapOf(),
   var width: Int = 0,
   var height: Int = 0,
-  val antenna: MutableMap<Char, MutableSet<Coord>> = mutableMapOf()
 ) {
   fun update(line: String) = apply {
     line
@@ -30,12 +27,12 @@ class Data(
     c.y >= 0 && c.y < height
 
   fun antiNodes(): Map<Char, Set<Coord>> =
-    antenna.map { (freq, nodes) ->
-      antiNodesFor(nodes).let { freq to it }
-    }.toMap()
+    antenna
+      .map { (freq, nodes) -> antiNodesFor(nodes).let { freq to it } }
+      .toMap()
 
   fun antiNodesFor(nodes: Set<Coord>): Set<Coord> =
-    pairs(nodes)
+    distinctOrders(nodes)
       .flatMap { (a, b) -> antiNodeCoordsFor(a, b) }
       .filter(::isOnMap)
       .toSet()
@@ -58,7 +55,7 @@ class Data(
     .toSet()
 }
 
-fun <T> pairs(items: Collection<T>): Sequence<Pair<T, T>> = sequence {
+fun <T> distinctOrders(items: Collection<T>): Sequence<Pair<T, T>> = sequence {
   items.forEachIndexed { indA, a ->
     items.forEachIndexed { indB, b ->
       if (indB != indA) yield(a to b)

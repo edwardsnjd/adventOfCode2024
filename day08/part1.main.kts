@@ -1,20 +1,14 @@
 #! /usr/bin/env -S kotlin -J-ea
 
 data class Coord(val x: Int, val y: Int) {
-  operator fun plus(other: Coord): Coord =
-    Coord(x + other.x, y + other.y)
-
-  operator fun minus(other: Coord): Coord =
-    Coord(x - other.x, y - other.y)
+  operator fun plus(other: Coord): Coord = Coord(x + other.x, y + other.y)
+  operator fun minus(other: Coord): Coord = Coord(x - other.x, y - other.y)
 }
 
-assert(Coord(0,1) + Coord(1,2) == Coord(1,3))
-assert(Coord(0,1) - Coord(1,2) == Coord(-1,-1))
-
-class Data(
+data class Data(
+  val antenna: MutableMap<Char, MutableSet<Coord>> = mutableMapOf(),
   var width: Int = 0,
   var height: Int = 0,
-  val antenna: MutableMap<Char, MutableSet<Coord>> = mutableMapOf()
 ) {
   fun update(line: String) = apply {
     line
@@ -33,21 +27,21 @@ class Data(
     c.y >= 0 && c.y < height
 
   fun antiNodes(): Map<Char, Set<Coord>> =
-    antenna.map { (freq, nodes) ->
-      antiNodesFor(nodes)
-        .filter(this::isOnMap)
-        .toSet()
-        .let { freq to it }
-    }.toMap()
+    antenna
+      .map { (freq, nodes) -> antiNodesFor(nodes).let { freq to it } }
+      .toMap()
 
   fun antiNodesFor(nodes: Set<Coord>): Set<Coord> =
-    pairs(nodes).flatMap { (a, b) -> antiNodeCoordsFor(a, b) }.toSet()
+    distinctOrders(nodes)
+      .flatMap { (a, b) -> antiNodeCoordsFor(a, b) }
+      .filter(::isOnMap)
+      .toSet()
 
   fun antiNodeCoordsFor(a: Coord, b: Coord): Set<Coord> =
     (b-a).let { diff -> setOf(a - diff,  b + diff)}
 }
 
-fun <T> pairs(items: Collection<T>): Sequence<Pair<T, T>> = sequence {
+fun <T> distinctOrders(items: Collection<T>): Sequence<Pair<T, T>> = sequence {
   items.forEachIndexed { indA, a ->
     items.forEachIndexed { indB, b ->
       if (indB != indA) yield(a to b)
@@ -58,6 +52,5 @@ fun <T> pairs(items: Collection<T>): Sequence<Pair<T, T>> = sequence {
 generateSequence(::readlnOrNull)
   .fold(Data(), Data::update)
   .let { it.antiNodes() }
-  .let { it.values.fold(mutableSetOf<Coord>(), Set<Coord>::plus) }
-  .also(::println)
+  .let { it.values.fold(setOf(), Set<Coord>::plus) }
   .let { it.count() }
