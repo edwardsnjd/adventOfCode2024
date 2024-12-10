@@ -35,15 +35,15 @@ val g = Grid(input)
 fun Grid.trailHeads() =
   coords().filter { cell(it) == 0 }
 
-fun Grid.trailsFrom(c: Coord): List<List<Coord>> {
+fun Grid.trailsFrom(c: Coord): Set<List<Coord>> {
   val h = cell(c)!!
-  return if (h == 9) listOf(listOf(c))
+  return if (h == 9) setOf(listOf(c))
   else surrounding(c)
     .filter { cell(it) == h + 1 }
-    .flatMap { trailsFrom(it) }
-    .map { listOf(c) + it }
+    .map { trailsFrom(it).map { listOf(c) + it } }
+    .fold(emptySet()) { a, b -> a + b }
 }
 
 g.trailHeads()
-  .map { coord -> g.trailsFrom(coord).toSet().count() }
+  .map { coord -> g.trailsFrom(coord).count() }
   .sum()
