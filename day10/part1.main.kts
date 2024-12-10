@@ -35,13 +35,13 @@ val g = Grid(input)
 fun Grid.trailHeads() =
   coords().filter { cell(it) == 0 }
 
-fun Grid.trailEndsFrom(c: Coord): Set<Coord> {
+fun Grid.trailEndsFrom(c: Coord): Set<Coord> = buildSet {
   val h = cell(c)!!
-  return if (h == 9) setOf(c)
+  if (h == 9) add(c)
   else surrounding(c)
     .filter { cell(it) == h + 1 }
-    .map { trailEndsFrom(it) }
-    .fold(emptySet()) { a, b -> a + b }
+    .flatMap { trailEndsFrom(it) }
+    .forEach { add(it) }
 }
 
 g.trailHeads()
