@@ -26,12 +26,10 @@ data class Data(
   }
 }
 
-data class Coord(val x: Int, val y: Int) {
-  operator fun minus(c: Coord) = Coord(x-c.x, y-c.y)
-}
+data class Coord(val x: Int, val y: Int)
 
 data class Machine(val buttonA: Coord, val buttonB: Coord, val prize: Coord) {
-  fun minPath(): Int? = buildList {
+  fun minTokens(): Int? = buildList {
     for (i in 0..100) {
       for (j in 0..100) {
         if (
@@ -46,6 +44,6 @@ data class Machine(val buttonA: Coord, val buttonB: Coord, val prize: Coord) {
 input
   .fold(Data(), Data::update)
   .machines
-  .map(Machine::minPath)
+  .map(Machine::minTokens)
   .filterNotNull()
   .sum()

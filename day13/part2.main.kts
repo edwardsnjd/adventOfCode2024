@@ -28,8 +28,10 @@ data class Data(
 
 data class Coord(val x: Long, val y: Long)
 
+fun Double.isInteger(err: Double = 1E-10) = this % 1.0 < err
+
 data class Machine(val buttonA: Coord, val buttonB: Coord, val prize: Coord) {
-  fun minPath(): Long? = buildList<Long> {
+  fun minTokens(): Long? = buildList<Long> {
     // For each matching combo:
     //   p.A + q.B = P
     // Form eq for each dimension:
@@ -41,7 +43,9 @@ data class Machine(val buttonA: Coord, val buttonB: Coord, val prize: Coord) {
       ((buttonB.y * buttonA.x) - (buttonB.x * buttonA.y))
     val p =
       (prize.x.toDouble() - (q * buttonB.x)) / buttonA.x
-    if (kotlin.math.abs(q) % 1.0 < 1E-10 && kotlin.math.abs(p) % 1.0 < 1E-10) {
+
+    // Only keep integer solutions
+    if (q.isInteger() && p.isInteger()) {
       add(3L*p.toLong() + q.toLong())
     }
   }.minOrNull()
@@ -53,6 +57,6 @@ input
   .fold(Data(), Data::update)
   .machines
   .map { Machine(it.buttonA, it.buttonB, Coord(it.prize.x+extra, it.prize.y+extra)) }
-  .map(Machine::minPath)
+  .map(Machine::minTokens)
   .filterNotNull()
   .sum()
