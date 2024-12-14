@@ -2,8 +2,6 @@
 
 val input = generateSequence(::readlnOrNull).toList()
 
-val extra = 10000000000000
-
 data class Data(
   var latestA: Coord? = null,
   var latestB: Coord? = null,
@@ -22,36 +20,39 @@ data class Data(
       latestB = Coord(dx.toLong(),dy.toLong())
     }
     prizeRegex.matchEntire(line)?.destructured?.let { (x,y) ->
-      latestPrize = Coord(extra + x.toLong(),extra + y.toLong())
+      latestPrize = Coord(x.toLong(),y.toLong())
       machines.add(Machine(latestA!!, latestB!!, latestPrize!!))
     }
   }
 }
 
-data class Coord(val x: Long, val y: Long) {
-  operator fun minus(c: Coord) = Coord(x-c.x, y-c.y)
-}
+data class Coord(val x: Long, val y: Long)
 
 data class Machine(val buttonA: Coord, val buttonB: Coord, val prize: Coord) {
-  fun minPath(): Long? = buildList {
-    val maxA = prize.x / buttonA.x
-    val maxB = prize.x / buttonB.x
-    println("0..$maxA and 0..$maxB")
-
-    for (aPresses in 0..maxA) {
-      for (bPresses in 0..maxB) {
-        if (
-          (buttonA.x * aPresses + buttonB.x * bPresses == prize.x) &&
-          (buttonA.y * aPresses + buttonB.y * bPresses == prize.y)
-        ) add(3L*aPresses +  bPresses)
-      }
+  fun minPath(): Long? = buildList<Long> {
+    // For each matching combo:
+    //   p.A + q.B = P
+    // Form eq for each dimension:
+    //   p.Ax + q.Bx = Px
+    //   p.Ay + q.By = Py
+    // Rearrange and solve for p and q:
+    val q =
+      ((prize.y.toDouble() * buttonA.x) - (prize.x * buttonA.y)) /
+      ((buttonB.y * buttonA.x) - (buttonB.x * buttonA.y))
+    val p =
+      (prize.x.toDouble() - (q * buttonB.x)) / buttonA.x
+    if (kotlin.math.abs(q) % 1.0 < 1E-10 && kotlin.math.abs(p) % 1.0 < 1E-10) {
+      add(3L*p.toLong() + q.toLong())
     }
   }.minOrNull()
 }
 
+val extra = 10000000000000L
+
 input
   .fold(Data(), Data::update)
   .machines
+  .map { Machine(it.buttonA, it.buttonB, Coord(it.prize.x+extra, it.prize.y+extra)) }
   .map(Machine::minPath)
   .filterNotNull()
   .sum()

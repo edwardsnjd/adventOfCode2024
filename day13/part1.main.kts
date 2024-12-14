@@ -11,6 +11,7 @@ data class Data(
   val buttonARegex = Regex("""Button A: X\+(\d+), Y\+(\d+)""")
   val buttonBRegex = Regex("""Button B: X\+(\d+), Y\+(\d+)""")
   val prizeRegex = Regex("""Prize: X=(\d+), Y=(\d+)""")
+
   fun update(line: String) = apply {
     buttonARegex.matchEntire(line)?.destructured?.let { (dx,dy) ->
       latestA = Coord(dx.toInt(),dy.toInt())
