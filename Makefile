@@ -6,7 +6,6 @@ SHELL := bash
 .PHONY: loc.png
 loc.png:
 	@fd 'part' --exec wc -l \
-	| awk '{print $$1, $$2}' \
 	| sort -k2,2 \
 	| awk '{print $$2, $$1}' \
 	| sed -E 's|^./||' \
