@@ -22,7 +22,7 @@ Each day has a directory:
 └── README.md
 ```
 
-Each day's directory contains the example and puzzle input, as `example.txt` and `input.txt` respectively, and an executable script for each part, `part1` and `part2` respectively:
+Each day's directory contains the example input(s), as `example.txt` etc., and an executable script for each part, `part1` and `part2` respectively:
 
 ```
 ├── day../
@@ -34,3 +34,10 @@ Each day's directory contains the example and puzzle input, as `example.txt` and
 │   └── README.md
 └── README.md
 ```
+
+Solution lengths
+----------------
+
+Here's how many lines of code it's taking me for the solutions that I've completed:
+
+![LoC by part](loc.png)
