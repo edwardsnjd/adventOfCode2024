@@ -23,10 +23,11 @@ enum class NumericKey {
   }
 }
 
-// NB. Order matters here!  When sorted by this order, jumps are minimised
 enum class DirKey { Left, Down, Up, Right, DirA }
 
-object NumericKeypad {
+typealias KeySequence = List<DirKey>
+
+class NumericKeypad {
   val adjacency: Map<NumericKey, List<Pair<DirKey, NumericKey>>> = mapOf(
     NumA  to listOf(               Left to Zero,                   Up to Three),
     Zero  to listOf(                               Right to NumA,  Up to Two),
@@ -41,42 +42,12 @@ object NumericKeypad {
     Nine  to listOf(Down to Six,   Left to Eight),
   )
 
-  val moves: Map<Pair<NumericKey, NumericKey>, List<DirKey>> by lazy {
-    val moves: MutableMap<Pair<NumericKey, NumericKey>, List<DirKey>> = mutableMapOf()
-
-    for (i in NumericKey.values()) {
-      moves[i to i] = emptyList()
-    }
-
-    for ((fromKey, adjs) in adjacency) {
-      adjs.forEach { (dir, toKey) -> moves[fromKey to toKey] = listOf(dir) }
-    }
-
-    for (k in NumericKey.values()) {
-      for (i in NumericKey.values()) {
-        for (j in NumericKey.values()) {
-          val v = moves.get(i to k)
-          val u = moves.get(k to j)
-
-          if (u == null || v == null) continue
-
-          val throughK = v + u
-          val throughKCount = throughK.count()
-
-          val existingCount = moves.get(i to j)?.count() ?: Int.MAX_VALUE
-
-          if (throughKCount < existingCount) {
-            moves[i to j] = throughK.sorted()
-          }
-        }
-      }
-    }
-
-    moves
+  val shortestPaths: Map<Pair<NumericKey, NumericKey>, List<KeySequence>> by lazy {
+    shortestPaths(NumericKey.values().toList(), adjacency)
   }
 }
 
-object DirectionalKeypad {
+class DirectionalKeypad {
   val adjacency: Map<DirKey, List<Pair<DirKey, DirKey>>> = mapOf(
     DirA to listOf(Left to Up, Down to Right),
     Up to listOf(Right to DirA, Down to Down),
@@ -85,42 +56,58 @@ object DirectionalKeypad {
     Right to listOf(Left to Down, Up to DirA),
   )
 
-  val moves: Map<Pair<DirKey, DirKey>, List<DirKey>> by lazy {
-    val moves: MutableMap<Pair<DirKey, DirKey>, List<DirKey>> = mutableMapOf()
-
-    for (i in DirKey.values()) {
-      moves[i to i] = emptyList()
-    }
-
-    for ((fromKey, adjs) in adjacency) {
-      adjs.forEach { (dir, toKey) -> moves[fromKey to toKey] = listOf(dir) }
-    }
-
-    for (k in DirKey.values()) {
-      for (i in DirKey.values()) {
-        for (j in DirKey.values()) {
-          val toK = moves.get(i to k)
-          val fromK = moves.get(k to j)
-
-          if (toK == null || fromK == null) continue
-
-          val throughK = toK + fromK
-          val throughKCount = throughK.count()
-
-          val existingCount = moves.get(i to j)?.count() ?: Int.MAX_VALUE
-
-          if (throughKCount < existingCount) {
-            moves[i to j] = throughK.sorted()
-          }
-        }
-      }
-    }
-
-    moves
+  val shortestPaths: Map<Pair<DirKey, DirKey>, List<KeySequence>> by lazy {
+    shortestPaths(DirKey.values().toList(), adjacency)
   }
 }
 
-fun List<DirKey>.repr() = listOf(
+fun <T,U> shortestPaths(
+  nodes: Collection<T>,
+  adjacency: Map<T, List<Pair<U, T>>>,
+): Map<Pair<T, T>, List<List<U>>> {
+  val dists: MutableMap<Pair<T, T>, Int> = mutableMapOf()
+  val moves: MutableMap<Pair<T, T>, MutableList<List<U>>> = mutableMapOf()
+
+  for (i in nodes) {
+    dists[i to i] = 0
+    moves[i to i] = mutableListOf(emptyList<U>())
+  }
+
+  for ((fromKey, adjs) in adjacency) {
+    adjs.forEach { (dir, toKey) ->
+      dists[fromKey to toKey] = 1
+      moves[fromKey to toKey] = mutableListOf(listOf(dir))
+    }
+  }
+
+  for (k in nodes) {
+    for (i in nodes) {
+      for (j in nodes) {
+        val distToK = dists.get(i to k)
+        val distFromK = dists.get(k to j)
+        if (distToK == null || distFromK == null) continue
+
+        val distThroughK = distToK + distFromK
+        val existingDist = dists.get(i to j) ?: Int.MAX_VALUE
+
+        if (distThroughK < existingDist) {
+          dists[i to j] = distThroughK
+          moves[i to j] = mutableListOf()
+        }
+        if (distThroughK <= existingDist) {
+          val movesToK = moves[i to k]!!
+          val movesFromK = moves[k to j]!!
+          val movesThroughK = movesToK.flatMap { i2k -> movesFromK.map { i2k + it } }
+          moves[i to j]!!.addAll(movesThroughK)
+        }
+      }
+    }
+  }
+
+  return moves
+}
+
+fun KeySequence.repr() = listOf(
   count(),
   map {
     when (it) {
@@ -133,15 +120,56 @@ fun List<DirKey>.repr() = listOf(
   }.joinToString(""),
 ).joinToString(": ")
 
+val nk = NumericKeypad()
+val dk = DirectionalKeypad()
 
 fun go(c: String): Int {
   val numKeys = c.map(NumericKey::parse)
-  val robot1Dirs = (listOf(NumA) + numKeys).windowed(2).flatMap { (a,b) -> NumericKeypad.moves[a to b]!! + listOf(DirA) }
-  val robot2Dirs = (listOf(DirA) + robot1Dirs).windowed(2).flatMap { (a,b) -> DirectionalKeypad.moves[a to b]!! + listOf(DirA) }
-  val robot3Dirs = (listOf(DirA) + robot2Dirs).windowed(2).flatMap { (a,b) -> DirectionalKeypad.moves[a to b]!! + listOf(DirA) }
+
+  val robot1Options: List<KeySequence> = buildList {
+    listOf(numKeys)
+      .map { listOf(NumA) + it }
+      .forEach { it.windowed(2).flatMap { (a,b) -> nk.shortestPaths[a to b]!!.map { optForA2B -> optForA2B + listOf(DirA) } } }
+      .let { seqs ->
+        val minLength = seqs.map { it.count() }.min()
+        val shortest = seqs.filter { it.count() == minLength }
+        println("Robot1 filtered from ${seqs.count()} to ${shortest.count()}")
+        shortest
+      }
+  println(robot1Options[0]!!)
+
+  val robot2Options: List<KeySequence> =
+    robot1Options
+      .map { listOf(DirA) + it }
+      .flatMap { it.windowed(2).flatMap { (a,b) -> dk.shortestPaths[a to b]!!.map { it + listOf(DirA) } } }
+      .let { seqs ->
+        val minLength = seqs.map { it.count() }.min()
+        val shortest = seqs.filter { it.count() == minLength }
+        println("Robot2 filtered from ${seqs.count()} to ${shortest.count()}")
+        shortest
+      }
+  println(robot2Options[0]!!)
+
+  val robot3Options: List<KeySequence> =
+    robot2Options
+      .map { listOf(DirA) + it }
+      .flatMap { it.windowed(2).flatMap { (a,b) -> dk.shortestPaths[a to b]!!.map { it + listOf(DirA) } } }
+      .let { seqs ->
+        val minLength = seqs.map { it.count() }.min()
+        val shortest = seqs.filter { it.count() == minLength }
+        println("Robot3 filtered from ${seqs.count()} to ${shortest.count()}")
+        shortest
+      }
+  println(robot3Options[0]!!)
+
+  val robot3Seq =
+    robot3Options
+      .sortedBy { it.count() }
+      .first()
+
+  println()
   val codeNum = Regex("""\d+""").find(c)!!.value.toInt()
-  // println("$c $codeNum\n\t${robot1Dirs.repr()}\n\t${robot2Dirs.repr()}\n\t${robot3Dirs.repr()}")
-  return codeNum * robot3Dirs.count()
+  return codeNum * robot3Seq.count()
 }
 
 val codes = generateSequence(::readlnOrNull).toList()
