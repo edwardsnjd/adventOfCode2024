@@ -95,19 +95,6 @@ fun <T> shortestPaths(
   return moves
 }
 
-// fun KeySequence.repr() = listOf(
-//   count(),
-//   map {
-//     when (it) {
-//       DirA -> 'A'
-//       Left -> '<'
-//       Right -> '>'
-//       Up -> '^'
-//       Down -> 'v'
-//     }
-//   }.joinToString(""),
-// ).joinToString(": ")
-
 fun parse(c: Char) = when (c) {
   'A' -> NumA
   '0' -> Zero
@@ -123,59 +110,43 @@ fun parse(c: Char) = when (c) {
   else -> error("Unrecognised NumericKey code $c")
 }
 
-fun KeyOptions.shortest(): KeyOptions {
-  var minLength = Int.MAX_VALUE
-  var results = mutableSetOf<KeySequence>()
-
-  forEach { ks ->
-    val length = ks.count()
-    when {
-      length < minLength -> {
-        minLength = length
-        results = mutableSetOf(ks)
-      }
-      length == minLength -> {
-        results.add(ks)
-      }
-    }
-  }
-
-  return results.toList()
-}
+fun <T> Collection<T>.toSteps() = windowed(2).map { (a,b) -> a to b }
 
 val nk = NumericKeypad()
 val dk = DirectionalKeypad()
 
-fun viaRobots(options: KeyOptions, robots: Int): KeyOptions {
-  var opts = options
+fun numKeyOptions(step: Step<NumericKey>): KeyOptions = nk.pathsByStep[step]!!
+fun dirKeyOptions(step: Step<DirKey>): KeyOptions = dk.pathsByStep[step]!!
 
-  for (i in (0..<robots)) {
-    opts = opts.flatMap { keys ->
-      (listOf(DirA) + keys)
-        .windowed(2)
-        .map { (a,b) -> dk.pathsByStep[a to b]!! }
-        .reduce { a, o -> a.flatMap { foo -> o.map { foo + it } } }
-    }.shortest()
+fun minKeys(options: KeyOptions, robots: Int): Long =
+  options
+    .map { keys ->
+      val steps = (listOf(DirA) + keys).toSteps()
+      steps.map { minKeys(it, robots) }.sum()
+    }
+    .min()
+
+val cache = mutableMapOf<Pair<Step<DirKey>, Int>, Long>()
+fun minKeys(step: Step<DirKey>, robots: Int) = cache.getOrPut(step to robots) {
+  val options = dirKeyOptions(step)
+  when (robots) {
+    1 -> options.first().count().toLong()
+    else -> minKeys(options, robots-1)
   }
-
-  return opts.shortest()
 }
 
-fun complexity(c: String): Int {
+fun complexity(c: String): Long {
   val codeNum = Regex("""\d+""").find(c)!!.value.toInt()
-  val numKeys = c.map(::parse)
+  val keys = c.map(::parse)
 
-  val steps = (listOf(NumA) + numKeys).windowed(2)
-  val stepOptions = steps.map { (a,b) -> nk.pathsByStep[a to b]!! }
+  val steps = (listOf(NumA) + keys).toSteps()
+  val optionsForEachNum = steps.map { numKeyOptions(it) }
 
-  val robots = 2
+  val robots = 25
+  var total = optionsForEachNum.map { minKeys(it, robots) }.sum()
 
-  var total =
-    stepOptions
-      .map { viaRobots(it, robots).let { it.first().count() } }
-      .sum()
-
-  return codeNum * total
+  return total * codeNum
 }
 
-generateSequence(::readlnOrNull).map(::complexity).sum()
+val input = generateSequence(::readlnOrNull)
+input.map(::complexity).sum()
