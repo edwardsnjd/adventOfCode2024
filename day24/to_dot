@@ -1,0 +1,52 @@
+#! /usr/bin/env bash
+
+set -o nounset
+set -o errexit
+set -o pipefail
+#set -o xtrace
+
+function Main() {
+   cat <<-EOF
+		digraph Wiring {
+		  label = "Input wiring";
+		  fontname = "Sans-Serif";
+		  fontsize="13pt";
+		
+		  graph [rankdir=TB]; // TB LR BT RL
+		  node [
+		    shape=box // box circle cylinder doublecircle none Mrecord plain plaintext point record square underline
+		    style=filled // dashed dotted solid invis bold tapered filled striped wedged diagonals rounded radial
+		    fillcolor="#fefedd"
+		    fontname = "Monospace"
+		    fontsize="10pt"
+		    margin="0.1"
+		    // bgcolor color colorscheme fillcolor fontcolor labelfontcolor pencolor truecolor
+		  ];
+		
+		$(dotNodes)
+		}
+	EOF
+}
+
+function dotNodes() {
+  awk '
+    BEGIN {
+      IFS = " "
+      srand()
+    }
+    /:/ {
+      gsub(":.*", "", $1)
+      printf "  %s [fillcolor=lightpink];\n", $1
+    }
+    />/ {
+      nid=rand()
+      if (substr($5, 0, 1) == "z") {
+        printf "  %s [fillcolor=lightblue];\n", $5
+      }
+      printf "%s [label=%s fillcolor=white];\n", nid, $2
+      printf "  { %s, %s } -> %s -> %s;\n", $1, $3, nid, $5
+    }
+  '
+}
+
+Main "$@"

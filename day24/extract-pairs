@@ -1,0 +1,7 @@
+#! /usr/bin/env -S awk -f
+
+BEGIN { IFS = " " }
+/>/ {
+ print $1, $5
+ print $3, $5
+}
