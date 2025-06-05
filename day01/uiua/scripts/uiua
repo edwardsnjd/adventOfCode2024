@@ -1,0 +1,11 @@
+#! /usr/bin/env bash
+
+DOCKER_CMD="${DOCKER_CMD:-podman}"
+
+exec "$DOCKER_CMD" run \
+  --rm \
+  --interactive \
+  -v "$PWD":"$PWD" \
+  -w "$PWD" \
+  --entrypoint "uiua" \
+  ne-uiua "$@"

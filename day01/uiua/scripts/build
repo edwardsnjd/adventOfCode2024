@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -o nounset
+set -o errexit
+set -o pipefail
+#set -o xtrace
+
+DOCKER_CMD="${DOCKER_CMD:-podman}"
+
+"$DOCKER_CMD" build -t ne-uiua .
